@@ -17,7 +17,7 @@ module.exports = {
     const { userId } = req.params;
 
     if (!ObjectID.isValid(userId)) {
-      return res.status(400).json({ error: "Bad request." });
+      return res.status(400).json({ error: "Invalid user id" });
     }
 
     try {
@@ -25,7 +25,7 @@ module.exports = {
       if (user) {
         return res.status(200).json(user);
       } else {
-        return res.status(404).json({ error: "Not found." });
+        return res.status(404).json({ error: "Not found" });
       }
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -39,33 +39,31 @@ module.exports = {
 
       return res.status(201).json(newUser);
     } catch (err) {
-      return res.status(400).json({ error: "Bad request." });
+      return res.status(400).json({ error: "Bad request" });
     }
   },
   putUser: async (req, res, next) => {
     const { userId } = req.params;
-
+    console.log(userId);
     if (!ObjectID.isValid(userId)) {
-      return res.status(400).json({ error: "Bad request." });
+      return res.status(400).json({ error: "Invalid user id" });
     }
 
     try {
-      const prevUser = await User.findById(userId);
+      const prevUser = await User.findById(userId).populate("favoriteSongs");
       const newData = req.body;
 
       const newUser = new User(global.Object.assign(prevUser, newData));
 
-      await newUser.validate((err) => {
+      await newUser.validate(async (err) => {
         if (err) {
-          return res.status(400).json({ error: "Bad request." });
+          return res.status(400).json({ error: "Bad request" });
         }
 
-        (async () => {
-          const updatedUser = await User.findByIdAndUpdate(userId, newData, {
-            new: true,
-          });
-          return res.status(200).json({ updatedUser: updatedUser });
-        })();
+        await User.findByIdAndUpdate(userId, newData, {
+          new: true,
+        });
+        return res.status(200).json({ updatedUser: newUser });
       });
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -75,7 +73,7 @@ module.exports = {
     const { userId } = req.params;
 
     if (!ObjectID.isValid(userId)) {
-      return res.status(400).json({ error: "Bad request." });
+      return res.status(400).json({ error: "Invalid user id" });
     }
 
     const deletedUser = await User.findByIdAndDelete(userId);
@@ -96,7 +94,7 @@ module.exports = {
     const { mail } = req.params;
 
     if (!mail) {
-      return res.status(400).json({ status: 400, error: "Bad request." });
+      return res.status(400).json({ status: 400, error: "Bad request" });
     }
 
     try {
@@ -104,7 +102,7 @@ module.exports = {
       if (user[0]) {
         return res.status(200).json(user[0]);
       } else {
-        return res.status(404).json({ error: "Not found." });
+        return res.status(404).json({ error: "Not found" });
       }
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -115,15 +113,17 @@ module.exports = {
     const { songId } = req.body;
 
     if (!ObjectID.isValid(userId) || !ObjectID.isValid(songId)) {
-      return res.status(400).json({ error: "Bad request." });
+      return res
+        .status(400)
+        .json({ error: "Bad request. Invalid user id or song id" });
     }
 
     try {
-      const prevUser = await User.findById(userId);
+      const prevUser = await User.findById(userId).populate("favoriteSongs");
 
       // If song was already in favorites
       const indexSong = prevUser.favoriteSongs.findIndex(
-        (favoriteSong) => favoriteSong.id == song.id
+        (favoriteSong) => favoriteSong.id == songId
       );
       if (indexSong != -1) {
         return res.status(400).json({
@@ -137,17 +137,16 @@ module.exports = {
 
       const newUser = new User(global.Object.assign(prevUser, newData));
 
-      await newUser.validate((err) => {
+      await newUser.validate(async (err) => {
         if (err) {
-          return res.status(400).json({ error: "Bad request." });
+          return res.status(400).json({ error: "Bad request" });
         }
 
-        (async () => {
-          const updatedUser = await User.findByIdAndUpdate(userId, newData, {
-            new: true,
-          });
-          return res.status(200).json({ updatedUser: updatedUser });
-        })();
+        await User.findByIdAndUpdate(userId, newData, {
+          new: true,
+        });
+
+        return res.status(200).json({ updatedUser: newUser });
       });
     } catch (err) {
       return res.status(500).json({ error: err.message });
@@ -157,7 +156,9 @@ module.exports = {
     const { userId, songId } = req.params;
 
     if (!ObjectID.isValid(userId) || !ObjectID.isValid(songId)) {
-      return res.status(400).json({ error: "Bad request." });
+      return res
+        .status(400)
+        .json({ error: "Bad request. Invalid user id or song id" });
     }
 
     try {
@@ -165,30 +166,30 @@ module.exports = {
 
       // If song was not in favorites
       const indexSong = prevUser.favoriteSongs.findIndex(
-        (favoriteSong) => favoriteSong.id == song.id
+        (favoriteSongId) => favoriteSongId == songId
       );
+
+      console.log(prevUser.favoriteSongs);
       if (indexSong == -1) {
         return res.status(400).json({
           error: "Bad request. The song was not in your favorite songs",
         });
       }
-
       const newData = prevUser;
-      newData.favoriteSongs.splice(index, 1);
+      newData.favoriteSongs.splice(indexSong, 1);
 
       const newUser = new User(global.Object.assign(prevUser, newData));
 
-      await newUser.validate((err) => {
+      await newUser.validate(async (err) => {
         if (err) {
-          return res.status(400).json({ error: "Bad request." });
+          return res.status(400).json({ error: "Bad request" });
         }
 
-        (async () => {
-          const updatedUser = await User.findByIdAndUpdate(userId, newData, {
-            new: true,
-          });
-          return res.status(200).json({ updatedUser: updatedUser });
-        })();
+        const updatedUser = await User.findByIdAndUpdate(userId, newData, {
+          new: true,
+        }).populate("favoriteSongs");
+
+        return res.status(200).json({ updatedUser: updatedUser });
       });
     } catch (err) {
       return res.status(500).json({ error: err.message });

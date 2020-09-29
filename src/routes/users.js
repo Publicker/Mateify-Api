@@ -13,9 +13,12 @@ Router.put("/:userId", controller.putUser);
 
 Router.delete("/:userId", controller.deleteUser);
 
-Router.post("/:userId", controller.addFavoriteSong);
+Router.post("/:userId/addFavoriteSong", controller.addFavoriteSong);
 
-Router.delete("/:userId/:songId", controller.removeFavoriteSong);
+Router.delete(
+  "/:userId/removeFavoriteSong/:songId",
+  controller.removeFavoriteSong
+);
 
 module.exports = {
   Router,

@@ -9,14 +9,14 @@ module.exports = {
     res.status(200).json(songs);
   },
   getSong: async (req, res, next) => {
-    const { id } = req.params;
+    const { songId } = req.params;
 
-    if (!ObjectID.isValid(id)) {
-      return res.status(400).json({ error: "Invalid id" });
+    if (!ObjectID.isValid(songId)) {
+      return res.status(400).json({ error: "Invalid song id" });
     }
 
     try {
-      const song = await Song.findById(id);
+      const song = await Song.findById(songId);
       if (song) {
         return res.status(200).json(song);
       } else {
@@ -41,47 +41,47 @@ module.exports = {
     }
   },
   putSong: async (req, res, next) => {
-    const { id } = req.params;
+    const { songId } = req.params;
 
-    if (!ObjectID.isValid(id)) {
-      return res
-        .status(400)
-        .json({ error: "Wrong request. Missing or song data" });
+    if (!ObjectID.isValid(songId)) {
+      return res.status(400).json({ error: "Invalid song id" });
     }
 
     try {
-      const prevSong = await Song.findById(id);
+      const prevSong = await Song.findById(songId);
       const newData = req.body;
 
       const newSong = new Song(global.Object.assign(prevSong, newData));
 
-      await newSong.validate((err) => {
+      await newSong.validate(async (err) => {
         if (err) {
           console.log("err ", err);
           return res.status(400).json({ flag: "Bad Request", details: err });
         }
 
-        (async () => {
-          const updatedSong = await Song.findByIdAndUpdate(id, newData, {
-            new: true,
-          });
-          return res.status(200).json({ updatedSong: updatedSong });
-        })();
+        const updatedSong = await Song.findByIdAndUpdate(songId, newData, {
+          new: true,
+        });
+        return res.status(200).json({ updatedSong: updatedSong });
       });
     } catch (err) {
       return res.status(404).json({ error: err.message });
     }
   },
   deleteSong: async (req, res, next) => {
-    const { id } = req.params;
+    const { songId } = req.params;
 
-    if (!ObjectID.isValid(id)) {
-      return res
-        .status(400)
-        .json({ error: "Wrong request. Missing or wrong data" });
+    if (!ObjectID.isValid(songId)) {
+      return res.status(400).json({ error: "Invalid song id" });
     }
 
-    const deletedSong = await Song.findByIdAndDelete(id);
+    const deletedSong = await Song.findByIdAndDelete(songId);
+
+    if (!deletedSong) {
+      return res
+        .status(400)
+        .json({ error: "Bad request. The song was not founded" });
+    }
 
     return res.status(200).json({ deletedSong: deletedSong });
   },

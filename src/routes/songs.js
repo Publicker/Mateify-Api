@@ -7,11 +7,11 @@ Router.get("/", controller.index);
 
 Router.post("/", controller.postSong);
 
-Router.get("/:id", controller.getSong);
+Router.get("/:songId", controller.getSong);
 
-Router.put("/:id", controller.putSong);
+Router.put("/:songId", controller.putSong);
 
-Router.delete("/:id", controller.deleteSong);
+Router.delete("/:songId", controller.deleteSong);
 
 module.exports = {
   Router,
