@@ -23,6 +23,20 @@ const usersRoutes = require("./src/routes/users").Router;
 app.use("/songs", songsRoutes);
 app.use("/users", usersRoutes);
 
+// Set 404 error
+app.use(function (req, res, next) {
+  res.status(404);
+
+  // respond with json
+  if (req.accepts("json")) {
+    res.send({ error: "Not found. Please use a valid endpoint" });
+    return;
+  }
+
+  // default to plain-text. send()
+  res.type("txt").send("Not found");
+});
+
 app.set("port", process.env.PORT || 4000);
 const PORT = app.get("port");
 
